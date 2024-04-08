@@ -33,9 +33,17 @@ public:
     }
 
     template <std::size_t N>
-    void write_data(const std::vector<typename std::tuple_element<N, std::tuple<Args...>>::type> &data)
+    std::size_t write_data(const std::initializer_list<std::size_t>& index, const std::vector<typename std::tuple_element<N, std::tuple<Args...>>::type>& data)
     {
-        std::get<N>(hdus_).write_data(data);
+        boost::asio::const_buffer buffer(data.data(), data.size() * sizeof(typename std::tuple_element<N, std::tuple<Args...>>::type));
+        return std::get<N>(hdus_).write_data(index, buffer);
+    }
+
+    template <std::size_t N, class WriteToken>
+    auto async_write_data(const std::initializer_list<std::size_t>& index, const std::vector<typename std::tuple_element<N, std::tuple<Args...>>::type>& data, WriteToken&& token)
+    {
+        boost::asio::const_buffer buffer(data.data(), data.size() * sizeof(typename std::tuple_element<N, std::tuple<Args...>>::type));
+        return std::get<N>(hdus_).async_write_data(index, buffer, std::forward<WriteToken>(token));
     }
 
     template <std::size_t N>
@@ -53,7 +61,7 @@ public:
 
     public:
         hdu(ofits &parent_ofits, std::size_t offset, const std::initializer_list<std::size_t> &hdu_schema)
-            : parent_ofits_(parent_ofits), headers_written_(0), header_block_(2880, ' '), offset_(offset), data_offset_(0)
+            : parent_ofits_(parent_ofits), headers_written_(0), header_block_(2880, ' '), offset_(offset)
         {
             write_header("SIMPLE", "T");
 
@@ -68,6 +76,7 @@ public:
             for (const auto &size : hdu_schema)
             {
                 naxis_product *= size;
+                naxis_.push_back(size);
                 write_header("NAXIS" + std::to_string(++i), std::to_string(size));
             }
 
@@ -106,19 +115,64 @@ public:
             }
         }
 
-        void write_data(const std::vector<T> &data)
+        template <class ConstBufferSequence>
+        std::size_t write_data(const std::initializer_list<std::size_t> index, const ConstBufferSequence &buffers) const
         {
-            size_t data_size = data.size() * sizeof(T);
+            std::size_t offset = calculate_offset(index);
 
-            if (data_size < data_block_size_)
-            {
-                boost::asio::write_at(parent_ofits_.file_, kSizeHeaderBlock + offset_ + data_offset_ /*data_offset_ храним, чтобы смогли еще записать данные*/ , boost::asio::buffer(data.data(), data_size));
-                data_offset_ += data_size;
+            std::size_t data_size = boost::asio::buffer_size(buffers);
 
-            } else {
-                 throw std::runtime_error("Not enough space in the HDU");
+            if (data_size + offset > data_block_size_) {
+                throw std::runtime_error("Not enough space in the HDU");
             }
+
+            return boost::asio::write_at(parent_ofits_.file_, offset_ + kSizeHeaderBlock + offset, buffers);
         }
+
+        template <class ConstBufferSequence, class WriteToken>
+        auto async_write_data(const std::initializer_list<std::size_t>& index, const ConstBufferSequence& buffers, WriteToken&& token)
+        {
+            std::size_t offset = calculate_offset(index);
+
+            std::size_t data_size = boost::asio::buffer_size(buffers);
+
+            if (data_size + offset > data_block_size_) {
+                throw std::runtime_error("Not enough space in the HDU");
+            }
+            
+            return boost::asio::async_write_at(parent_ofits_.file_, offset_ + kSizeHeaderBlock + offset, buffers, std::forward<WriteToken>(token));
+        }
+
+        std::size_t calculate_offset(const std::initializer_list<std::size_t>& index) const
+        {
+            std::size_t offset = 0;
+
+            auto it = index.begin();
+            auto naxis_it = naxis_.rbegin();
+
+            if (*it > naxis_[0]) {
+                throw std::runtime_error("Index is out of bounds");
+            }
+
+            if (index.size() > naxis_.size()) {
+                throw std::runtime_error("Index size is greater than naxis_ size");
+            }
+
+            for (; it != index.end(); ++it, ++naxis_it)
+            {
+                std::size_t product = *it;
+
+                for (auto naxis_it_j = naxis_it; naxis_it_j != naxis_.rend() - 1; ++naxis_it_j)
+                {
+                    product *= *naxis_it_j;
+                }
+
+                offset += product;
+            }
+
+            return offset * sizeof(T);
+        }
+
 
         // для проверки
         std::size_t get_headers_written() const
@@ -199,7 +253,7 @@ public:
         mutable std::size_t headers_written_;
         std::size_t offset_;
         std::size_t data_block_size_;
-        std::size_t data_offset_;
+        std::vector<std::size_t> naxis_;
     };
 
 private:
