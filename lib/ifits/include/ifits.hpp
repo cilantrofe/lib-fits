@@ -65,6 +65,35 @@ public:
             return std::stoi(it->second);
         }
 
+        std::size_t calculate_offset(const std::initializer_list<std::size_t> &index) const
+        {
+            std::size_t offset = 0;
+
+            int naxis_size = (*this).get_NAXIS();
+
+            if (index.size() > naxis_size)
+            {
+                throw std::runtime_error("Index size is greater than NAXIS size");
+            }
+
+            auto it = index.begin();
+            int i = index.size();
+            for (; it != index.end(); ++it, --i)
+            {
+                std::size_t product = *it;
+
+                for (auto j = i; j != 1; --j)
+                {
+                    auto naxis_j = headers_.find("NAXIS" + std::to_string(j));
+                    product *= std::stoi(naxis_j->second);
+                }
+
+                offset += product;
+            }
+
+            return offset;
+        }
+
     private:
         static std::size_t round_offset(const std::size_t &offset)
         {
@@ -220,12 +249,44 @@ public:
                 offset += 80;
             }
 
+            offset_ = offset;
+
             return std::make_pair(hdu(*this), round_offset(offset));
         }
+
+        template <class T>
+        class image_hdu
+        {
+        public:
+            image_hdu(ifits &parent_hdu)
+                : parent_hdu_(parent_hdu)
+            {
+            }
+
+            template <std::size_t N, class MutableBufferSequence, class ReadToken>
+            auto async_read_data(const std::initializer_list<std::size_t> &index, const MutableBufferSequence &buffers, ReadToken &&token)
+            {
+                std::size_t offset = sizeof(T) * parent_hdu_.calculate_offset(index);
+
+                return boost::asio::async_read_at(parent_hdu_.parent_ifits_.file_, parent_hdu_.offset_ + offset, buffers, std::forward<ReadToken>(token));
+            }
+
+            template <class MutableBufferSequence>
+            std::size_t read_at(std::initializer_list<std::size_t> index, const MutableBufferSequence &buffers)
+            {
+                std::size_t offset = sizeof(T) * parent_hdu_.calculate_offset(index);
+
+                return boost::asio::read_at(parent_hdu_.parent_ifits_.file_, parent_hdu_.offset_ + offset, buffers);
+            }
+
+        private:
+            hdu &parent_hdu_;
+        };
 
     private:
         ifits &parent_ifits_;
         header_container_t headers_;
+        std::uint64_t offset_;
     };
 
     explicit ifits(boost::asio::io_context &io_context, const std::filesystem::path &filename)
@@ -252,6 +313,11 @@ public:
     }
 
 public:
+    hdu get_hdu_at(std::size_t index) const {
+        auto it = std::next(hdus_.begin(), index);
+        return *it;
+    }
+
     std::list<hdu>::const_iterator cbegin() const
     {
         return hdus_.cbegin();
@@ -276,36 +342,6 @@ public:
     {
         return hdus_;
     }
-
-    template <class T>
-    class image_hdu
-    {
-    public:
-        image_hdu(ifits &parent_ifits)
-            : parent_ifits_(parent_ifits),
-              axis_(parent_ifits.get_hdus().front().get_NAXIS())
-        {
-        }
-
-        auto async_read(T *buffer, std::function<void(std::size_t)> callback)
-        {
-            boost::asio::mutable_buffer buf(buffer, sizeof(T));
-
-            return boost::asio::async_read_at(parent_ifits_.file_, buf, boost::asio::transfer_exactly(sizeof(T)),
-                                           [callback](const boost::system::error_code &error, std::size_t bytes_transferred)
-                                           {
-                                               if (error)
-                                               {
-                                                   throw std::runtime_error("Error reading file: " + error.message());
-                                               }
-                                               callback(bytes_transferred);
-                                           });
-        }
-
-    private:
-        ifits &parent_ifits_;
-        std::vector<std::size_t> axis_;
-    };
 
 private:
     boost::asio::random_access_file file_;
