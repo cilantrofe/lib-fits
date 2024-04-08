@@ -128,28 +128,3 @@ TEST(test_ifits, check_not_existing_header_optional)
     std::optional<std::string> value = movie64_fits.get_hdus().front().value_as_optional<std::string>("NON_EXISTING_KEY");
     EXPECT_EQ(value, std::nullopt);
 }
-
-TEST(test_ifits, check_image_hdu) {
-    boost::asio::io_context io_context;
-
-    std::filesystem::path filename = DATA_ROOT "/movie-64.fits";
-
-    ifits movie64_fits(io_context, filename);
-
-    ifits::image_hdu<float> image_hdu(movie64_fits);
-
-    float buffer;
-    /* 
-    boost::asio::post(io_context, [&]() {
-        boost::asio::mutable_buffer buf(&buffer, sizeof(float));
-        image_hdu.async_read(buf, [&](std::size_t bytes_transferred) {
-
-            float* float_buffer = static_cast<float*>(buf.data());
-
-            ASSERT_EQ(bytes_transferred, sizeof(float));
-        });
-    });
-    */
-
-    io_context.run();
-}

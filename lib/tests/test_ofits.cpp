@@ -50,14 +50,8 @@ TEST(ofits_test, check_data)
     ofits<std::uint8_t, float> double_hdu_data_file{io_context, DATA_ROOT "/double_hdu_data.fits", {{{200, 300}, {100, 50, 50}}}};
 
     std::vector<std::uint8_t> data_uint8_t = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
-
-    double_hdu_data_file.write_data<0>(data_uint8_t);
-
-    std::vector<std::uint8_t> data2_uint8_t = {110, 120, 130, 140, 150, 160 };
-
-    double_hdu_data_file.write_data<0>(data2_uint8_t);
-
+    double_hdu_data_file.write_data<0>({1, 2}, data_uint8_t);
+    
     std::vector<float> data_float = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f};
-
-    double_hdu_data_file.write_data<1>(data_float);
+    double_hdu_data_file.write_data<1>({3, 2, 1}, data_float);
 }
