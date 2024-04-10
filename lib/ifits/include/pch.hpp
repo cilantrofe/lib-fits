@@ -1,10 +1,13 @@
 /**
  * @file pch.hpp
- * @brief 
+ * @author Alina Gubeeva
+ * @brief Included headers
+ * @version 0.1
+ * @date 2024-04-10
+ * 
+ * @copyright Copyright (c) 2024
  * 
  */
-
-#pragma once
 
 // STL
 #include <string>
