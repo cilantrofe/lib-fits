@@ -49,13 +49,12 @@ public:
      */
     using header_container_t = std::unordered_multimap<std::string, std::string, CaseInsensitiveHash, CaseInsensitiveEqual>;
 
-    private:
-        /**
-         * @brief Size of a FITS header block in bytes.
-         *
-         * According to the FITS standard, the header block size is always 2880 bytes.
-         */
-        static constexpr auto kSizeHeaderBlock = 2880;
+    /**
+    * @brief Size of a FITS header block in bytes.
+    *
+    * According to the FITS standard, the header block size is always 2880 bytes.
+    */ 
+    static constexpr std::size_t kSizeHeaderBlock = 2880;
 
     public:
         /**
@@ -110,18 +109,17 @@ public:
             return std::stoi(it->second); // Convert the string to int
         }
 
-
         /**
-         * @brief Calculates the linear index for the given multi-dimensional index
+         * @brief Calculate the offset in the HDU data block
          *
-         * The calculation is based on the product of the sizes of axes for each dimension
-         * of the HDU, starting from the last dimension and moving backwards to the first.
-         * The result is the linear index of the value in the HDU with the given index.
+         * Calculates the offset in the HDU data block based on the indices
+         * specified in the initializer list. The indices specify the index
+         * of the element in the corresponding dimension of the HDU.
          *
-         * @param index Multi-dimensional index of the value
-         * @return Linear index of the value in the HDU
+         * @param index List of indices specifying the location in the HDU
+         * @return Offset in the HDU data block in bytes
          */
-        std::size_t calculate_index(const std::initializer_list<std::size_t> &index) const
+        std::size_t calculate_offset(const std::initializer_list<std::size_t> &index) const
         {
             std::size_t offset = 0;
 
@@ -133,7 +131,7 @@ public:
             }
 
             auto it = index.begin();
-            int i = index.size();
+            int i = naxis_size;
             for (; it != index.end(); ++it, --i)
             {
                 std::size_t product = *it; // Get the value of the current element
@@ -419,7 +417,7 @@ public:
             template <std::size_t N, class MutableBufferSequence, class ReadToken>
             auto async_read_data(const std::initializer_list<std::size_t> &index, const MutableBufferSequence &buffers, ReadToken &&token)
             {
-                std::size_t offset = sizeof(T) * parent_hdu_.calculate_index(index);
+                std::size_t offset = sizeof(T) * parent_hdu_.calculate_offset(index);
 
                 return boost::asio::async_read_at(parent_hdu_.parent_ifits_.file_, parent_hdu_.offset_ + offset, buffers, std::forward<ReadToken>(token));
             }
@@ -438,7 +436,7 @@ public:
             template <class MutableBufferSequence>
             std::size_t read_at(std::initializer_list<std::size_t> index, const MutableBufferSequence &buffers)
             {
-                std::size_t offset = sizeof(T) * parent_hdu_.calculate_index(index);
+                std::size_t offset = sizeof(T) * parent_hdu_.calculate_offset(index);
 
                 return boost::asio::read_at(parent_hdu_.parent_ifits_.file_, parent_hdu_.offset_ + offset, buffers);
             }
