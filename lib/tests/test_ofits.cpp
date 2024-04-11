@@ -5,9 +5,7 @@
 
 TEST(ofits_test, check_single_hdu)
 {
-    boost::asio::io_context io_context;
-
-    ofits<std::uint8_t> single_hdu_file{io_context, DATA_ROOT "/single_hdu.fits", {{{200, 300}}}};
+    ofits<std::uint8_t> single_hdu_file{DATA_ROOT "/single_hdu.fits", {{{200, 300}}}};
 
     auto& hdu_0 = single_hdu_file.get_hdu<0>();
 
@@ -22,9 +20,7 @@ TEST(ofits_test, check_single_hdu)
 
 TEST(ofits_test, check_double_hdu)
 {
-    boost::asio::io_context io_context;
-
-    ofits<std::uint8_t, float> double_hdu_file{io_context, DATA_ROOT "/double_hdu.fits", {{{200, 300}, {100, 50, 50}}}};
+    ofits<std::uint8_t, float> double_hdu_file{DATA_ROOT "/double_hdu.fits", {{{200, 300}, {100, 50, 50}}}};
 
     auto& hdu_0 = double_hdu_file.get_hdu<0>();
 
@@ -45,9 +41,7 @@ TEST(ofits_test, check_double_hdu)
 
 TEST(ofits_test, check_data)
 {
-    boost::asio::io_context io_context;
-
-    ofits<std::uint8_t, float> double_hdu_data_file{io_context, DATA_ROOT "/double_hdu_data.fits", {{{200, 300}, {100, 50, 50}}}};
+    ofits<std::uint8_t, float> double_hdu_data_file{DATA_ROOT "/double_hdu_data.fits", {{{200, 300}, {100, 50, 50}}}};
 
     std::vector<std::uint8_t> data_uint8_t = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
     double_hdu_data_file.write_data<0>({1, 2}, data_uint8_t);

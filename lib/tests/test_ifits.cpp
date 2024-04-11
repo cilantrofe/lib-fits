@@ -5,11 +5,9 @@
 
 TEST(test_ifits, print_headers)
 {
-    boost::asio::io_context io_context;
-
     std::filesystem::path filename = DATA_ROOT "/movie-64.fits";
 
-    ifits movie64_fits(io_context, filename);
+    ifits movie64_fits(filename);
 
     std::cout << "Movie-64 fits file" << '\n';
 
@@ -25,7 +23,7 @@ TEST(test_ifits, print_headers)
 
     filename = DATA_ROOT "/gradient.fits";
 
-    ifits gradient_fits(io_context, filename);
+    ifits gradient_fits(filename);
 
     std::cout << "Gradient fits file" << '\n';
 
@@ -42,11 +40,9 @@ TEST(test_ifits, print_headers)
 
 TEST(test_ifits, check_not_existing_header)
 {
-    boost::asio::io_context io_context;
-
     std::filesystem::path filename = DATA_ROOT "/movie-64.fits";
 
-    ifits movie64_fits(io_context, filename);
+    ifits movie64_fits(filename);
 
     try
     {
@@ -54,12 +50,12 @@ TEST(test_ifits, check_not_existing_header)
     }
     catch (const std::out_of_range &e)
     {
-        EXPECT_STREQ(e.what(), "Not found");
+        EXPECT_STREQ(e.what(), "Header keyword not found");
     }
 
     filename = DATA_ROOT "/gradient.fits";
 
-    ifits gradient_fits(io_context, filename);
+    ifits gradient_fits(filename);
 
     try
     {
@@ -67,17 +63,15 @@ TEST(test_ifits, check_not_existing_header)
     }
     catch (const std::out_of_range &e)
     {
-        EXPECT_STREQ(e.what(), "Not found");
+        EXPECT_STREQ(e.what(), "Header keyword not found");
     }
 }
 
 TEST(test_ifits, check_values)
 {
-    boost::asio::io_context io_context;
-
     std::filesystem::path filename = DATA_ROOT "/movie-64.fits";
 
-    ifits movie64_fits(io_context, filename);
+    ifits movie64_fits(filename);
 
     for (const auto &hdu : movie64_fits.get_hdus())
     {
@@ -89,7 +83,7 @@ TEST(test_ifits, check_values)
 
     filename = DATA_ROOT "/gradient.fits";
 
-    ifits gradient_fits(io_context, filename);
+    ifits gradient_fits(filename);
 
     for (const auto &hdu : gradient_fits.get_hdus())
     {
@@ -102,11 +96,9 @@ TEST(test_ifits, check_values)
 
 TEST(test_ifits, check_value_as_optional)
 {
-    boost::asio::io_context io_context;
-
     std::filesystem::path filename = DATA_ROOT "/movie-64.fits";
 
-    ifits movie64_fits(io_context, filename);
+    ifits movie64_fits(filename);
 
     for (const auto &hdu : movie64_fits.get_hdus())
     {
@@ -119,11 +111,9 @@ TEST(test_ifits, check_value_as_optional)
 
 TEST(test_ifits, check_not_existing_header_optional)
 {
-    boost::asio::io_context io_context;
-
     std::filesystem::path filename = DATA_ROOT "/movie-64.fits";
 
-    ifits movie64_fits(io_context, filename);
+    ifits movie64_fits(filename);
 
     std::optional<std::string> value = movie64_fits.get_hdus().front().value_as_optional<std::string>("NON_EXISTING_KEY");
     EXPECT_EQ(value, std::nullopt);
