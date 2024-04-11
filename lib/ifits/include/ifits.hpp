@@ -457,11 +457,11 @@ public:
      *
      * This constructor opens the FITS file at the given path and extracts the headers and data from the individual HDUs.
      *
-     * @param io_context The io_context to use for asynchronous operations
      * @param filename The path to the FITS file
      */
-    explicit ifits(boost::asio::io_context &io_context, const std::filesystem::path &filename)
-        : file_(io_context, filename, boost::asio::random_access_file::read_only)
+    explicit ifits(const std::filesystem::path &filename)
+        : io_context_(),
+          file_(io_context_, filename, boost::asio::random_access_file::read_only)
     {
         std::uint64_t next_hdu_offset = 0; // The offset of the next HDU
 
@@ -531,6 +531,7 @@ public:
     }
 
 private:
+    boost::asio::io_context io_context_; // IO context to use for asynchronous operations
     boost::asio::random_access_file file_; // The FITS file
     std::list<hdu> hdus_; // The list of HDUs
 };
