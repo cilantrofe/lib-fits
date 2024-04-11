@@ -34,13 +34,13 @@ public:
      *
      * Creates a file for writing and initializes HDUs. The file will be overwritten.
      *
-     * @param io_context io_context to use for asynchronous operations
      * @param filename Path to the file to create and write
      * @param schema Schema for HDUs. Each element of the array specifies the size of
      * the corresponding HDU.
      */
-    ofits(boost::asio::io_context &io_context, const std::filesystem::path &filename, std::array<std::initializer_list<std::size_t>, sizeof...(Args)> schema)
-        : file_(io_context, filename, boost::asio::stream_file::write_only | boost::asio::stream_file::create),
+    ofits(const std::filesystem::path &filename, std::array<std::initializer_list<std::size_t>, sizeof...(Args)> schema)
+        : io_context_(),
+          file_(io_context_, filename, boost::asio::stream_file::write_only | boost::asio::stream_file::create),
           offset_(0),
           hdus_{std::apply([&](auto &&...args)
           {
@@ -476,6 +476,7 @@ public:
     };
 
 private:
+    boost::asio::io_context io_context_; // IO context to use for asynchronous operations
     boost::asio::random_access_file file_; // File to write to
     std::size_t offset_; // Offset of the HDU in the file
     std::tuple<hdu<Args>...> hdus_; // HDUs of the file
