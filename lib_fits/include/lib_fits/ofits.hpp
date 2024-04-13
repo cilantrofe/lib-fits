@@ -62,7 +62,7 @@ public:
     {
     }
 
-    void io_context_run() {
+    void run() {
         io_context_.run();
     }
 
