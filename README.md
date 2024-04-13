@@ -2,7 +2,7 @@
 
 ## Description
 
-[Library for fast reading/writing of FITS files using Boost Asio]
+Library for fast reading/writing of FITS files using Boost Asio
 
 ## Installation
 
