@@ -24,7 +24,7 @@ target_include_directories(
 
 set(Boost_USE_STATIC_LIBS ON)
 
-find_package(Boost 1.74.0)
+find_package(Boost 1.84.0)
 include_directories(${Boost_INCLUDE_DIRS})
 
 target_link_libraries(lib_fits ${Boost_LIBRARIES})
