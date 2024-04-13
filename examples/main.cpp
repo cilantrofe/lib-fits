@@ -1,5 +1,6 @@
 #include <lib_fits.hpp>
 #include <iostream>
+#include <boost/asio.hpp>
 
 int main() {
     // Creating example.fits with 2 HDU's of size 20*30 and 10*6*5 in examples/build
@@ -7,7 +8,15 @@ int main() {
 
     // Async-write data to example.fits
     std::vector<float> data = {0.1f, 2.0f, 3.0f, 4.0f, 5.0f};
-    auto token = boost::asio::use_future;
-    example_file.async_write_data<1>({1, 2}, data, token);
-    
+
+    example_file.async_write_data<1>({0, 0}, data, [](const boost::system::error_code& error, std::size_t bytes_transferred) {
+        if (!error) {
+            std::cout << "Data written successfully to the first HDU" << std::endl;
+        } else {
+            std::cerr << "Error writing data to the first HDU: " << error.message() << std::endl;
+        }
+    });
+
+    example_file.io_context_run();
+
 }

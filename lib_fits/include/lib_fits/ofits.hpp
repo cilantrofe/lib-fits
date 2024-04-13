@@ -62,6 +62,10 @@ public:
     {
     }
 
+    void io_context_run() {
+        io_context_.run();
+    }
+
     /**
      * @brief Update the current offset in the file.
      *
