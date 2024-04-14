@@ -379,6 +379,9 @@ public:
                     value = std::string(buffer + 8, found);
                 }
 
+                boost::algorithm::erase_all(key, " "); // Remove whitespace
+                boost::algorithm::erase_all(key, "="); // Remove "="
+
                 boost::algorithm::erase_all(value, " "); // Remove whitespace
                 boost::algorithm::erase_all(value, "="); // Remove "="
 
@@ -504,23 +507,22 @@ public:
 
 public:
     /**
-     * @brief Get a reference to the HDU at the given index
-     *
-     * The index must be less than the number of HDUs in the file.
-     *
-     * @param index The index of the HDU to retrieve
-     * @return A reference to the HDU at the given index
+     * @brief Get the hdu object
+     * 
+     * @tparam N 
+     * @return auto& 
      */
-    hdu get_hdu_at(std::size_t index) const {
-        if (index >= hdus_.size()) {
+    template <std::size_t N>
+    auto& get_hdu() 
+    {
+        if (N >= hdus_.size()) {
             throw std::out_of_range("Index out of bounds");
         }
 
-        auto it = std::next(hdus_.begin(), index);
+        auto it = std::next(hdus_.begin(), N);
 
         return *it;
     }
-
 
     std::list<hdu>::const_iterator cbegin() const
     {

@@ -48,4 +48,7 @@ TEST(ofits_test, check_data)
     
     std::vector<float> data_float = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f};
     double_hdu_data_file.write_data<1>({3, 2, 1}, data_float);
+
+    ofits<std::uint8_t, float, double> three_hdu_file{DATA_ROOT "/three_hdu_data.fits", {{{20, 30}, {10, 5}, {25, 4}}}};
 }
+

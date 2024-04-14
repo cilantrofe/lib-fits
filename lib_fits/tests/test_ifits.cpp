@@ -118,3 +118,20 @@ TEST(test_ifits, check_not_existing_header_optional)
     std::optional<std::string> value = movie64_fits.get_hdus().front().value_as_optional<std::string>("NON_EXISTING_KEY");
     EXPECT_EQ(value, std::nullopt);
 }
+
+TEST(test_ifits, check_double_hdu)
+{
+    std::filesystem::path filename = DATA_ROOT "/double_hdu.fits";
+
+    ifits double_hdu_fits(filename);
+
+    auto &hdus = double_hdu_fits.get_hdus();
+
+    for (const auto &hdu : hdus)
+    {
+        for (const auto &[key, value] : hdu.get_headers())
+        {
+            EXPECT_EQ(value, hdu.value_as<std::string>(key));
+        }
+    }
+}

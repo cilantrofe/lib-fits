@@ -225,7 +225,7 @@ public:
             data_block_size_ = (((naxis_product * std::abs(bitpix) / 8) + kSizeHeaderBlock - 1) / kSizeHeaderBlock) * kSizeHeaderBlock;
 
             // Update the offset of the next HDU in the file
-            parent_ofits_.update_offset(round_offset(80 * headers_written_) + data_block_size_);
+            parent_ofits_.update_offset(round_offset(80 * headers_written_) + data_block_size_ + offset_);
         }
 
         /**
