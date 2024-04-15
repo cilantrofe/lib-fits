@@ -18,7 +18,7 @@ Library for fast reading/writing of FITS files using Boost Asio
     cd FITS-cpp-library/lib_fits
     ```
 
-3. Run CMake to generate build files in a `build` directory:
+3. Run CMake to generate build files in a `build` directory (before doing this, make sure that you have Boost installed at least 1.84):
 
     ```
     cmake -Bbuild
