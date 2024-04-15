@@ -8,37 +8,37 @@ Library for fast reading/writing of FITS files using Boost Asio
 
 1. Clone this repository to your local machine:
 
-    ```
+    ```bash
     git clone https://github.com/cilantrofe/FITS-cpp-library.git
     ```
 
 2. Navigate to the `lib_fits` directory:
 
-    ```
+    ```bash
     cd FITS-cpp-library/lib_fits
     ```
 
 3. Run CMake to generate build files in a `build` directory (before doing this, make sure that you have Boost installed at least 1.84):
 
-    ```
+    ```bash
     cmake -Bbuild
     ```
 
 4. Navigate to the `build` directory:
 
-    ```
+    ```bash
     cd build
     ```
 
 5. Build the project using Make:
 
-    ```
+    ```bash
     make
     ```
 
 6. Finally, install the project:
 
-    ```
+    ```bash
     cmake --build . --config Release --target install
     ```
 
@@ -51,7 +51,7 @@ To use the FITS-cpp-library, include it in your C++ project and utilize its func
 Here's an example of how to use the library in your code:
 
 ### examples/main.cpp:
-```
+```cpp
 #include <lib_fits.hpp>
 #include <iostream>
 #include <boost/asio.hpp>
@@ -90,7 +90,7 @@ int main() {
 ```
 
 ### examples/CMakeLists.txt:
-```
+```cmake
 cmake_minimum_required(VERSION 3.5.0)
 
 project(
