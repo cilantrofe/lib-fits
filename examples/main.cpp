@@ -1,31 +1,34 @@
 #include <lib_fits.hpp>
 #include <iostream>
-//#include <boost/asio.hpp>
+#include <boost/asio.hpp>
 
-int main() {
+int main()
+{
     /*
     / Writing
     */
 
     // Creating example.fits with 2 HDU's of size 20*30 and 10*6*5 in examples/build
-    ofits<int16_t, float> example_write{"example.fits",  {{{20, 30}, {10, 6, 5}}}};
+    ofits<int16_t, float> example_write{"example.fits", {{{20, 30}, {10, 6, 5}}}};
+    std::vector<int16_t> data_1 = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-    // Async-write data to example.fits
-    std::vector<float> data = {0.1f, 2.0f, 3.0f, 4.0f, 5.0f};
-
-    example_write.async_write_data<1>({0, 0}, data, /* your WriteToken */ [](const boost::system::error_code& error, std::size_t bytes_transferred) {
+    // Write data to first HDU
+    // {1, 2} - index --> offset for data = (1 × NAXIS2 + 2) × sizeof(int16_t) = 32 × 2 = 64
+    example_write.async_write_data<0>({1, 2}, boost::asio::buffer(data_1), [](const boost::system::error_code &error, std::size_t bytes_transferred)
+                                      {
         if (!error) {
             std::cout << "Data written successfully!" << std::endl;
         } else {
             std::cerr << "Error writing data: " << error.message() << std::endl;
-        } 
-    });
+        } });
 
     // Run context
     example_write.run();
-    
-    // Add header
-    example_write.value_as<0>("EXAMPLE", "2024-04-13");
+
+    // Add header to second HDU
+    example_write.value_as<1>("EXAMPLE", "2024-04-13");
+
+
 
     /*
     / Reading
@@ -35,9 +38,51 @@ int main() {
     ifits example_read("example.fits");
 
     // Get value from header EXAMPLE
-    auto hdu_0 = example_read.get_hdu<0>().value_as<std::string>("EXAMPLE");
+    auto hdu_1 = example_read.get_hdu<1>().value_as<std::string>("EXAMPLE");
 
-    std::cout << hdu_0 << std::endl;
+    std::cout << hdu_1 << std::endl;
+    
+    // Read data from first HDU
+    auto hdu_0 = example_read.get_hdu<0>();
+
+    // TODO: Fix this
+    std::vector<int16_t> buffer(10);
+    ifits::hdu::image_hdu<int16_t> image(hdu_0);
+
+    // This OK
+    image.async_read_data({1, 2}, boost::asio::buffer(buffer), [&](const boost::system::error_code &error, std::size_t bytes_transferred)
+                          {
+        if (!error) {
+            std::cout << "Data read successfully!" << std::endl;
+            std::cout << "Elements read: ";
+            for (std::size_t i = 0; i < 10; ++i) {
+                std::cout << buffer[i] << " ";
+            }
+            std::cout << std::endl;
+        } else {
+            std::cerr << "Error reading data: " << error.message() << std::endl;
+        } });
+    
+    // NOT OK
+    hdu_0.apply([](auto x)
+                {
+        std::vector<int16_t> buffer(10);
+        x.async_read_data({1, 2}, boost::asio::buffer(buffer), [&](const boost::system::error_code &error, std::size_t bytes_transferred)
+                          {
+        if (!error) {
+            std::cout << "Data read successfully!" << std::endl;
+            std::cout << "Bytes read: " << bytes_transferred << std::endl;
+            for (std::size_t i = 0; i < 10; ++i) {
+                    std::cout << buffer[i] << " ";
+            }
+            std::cout << std::endl;
+        } else {
+            std::cerr << "Error reading data: " << error.message() << std::endl;
+        } }); });
+
+
+    // Run the IO context for asynchronous operations
+    example_read.run();
 
     return 0;
 }
