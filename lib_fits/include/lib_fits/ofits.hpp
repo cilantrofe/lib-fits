@@ -117,50 +117,50 @@ public:
     /**
      * @brief Write data to a given HDU.
      *
-     * This function writes data to a given HDU. The HDU is specified by
-     * its index in the tuple of HDUs. The data is written at the specified
-     * location in the HDU. The location is specified by a multi-dimensional
-     * array of indices, where each index specifies the position of the
-     * element in the respective dimension.
+     * This function writes data to a given HDU. The HDU is identified by its index in
+     * the tuple of HDUs.
      *
      * @tparam N Index of the HDU in the tuple of HDUs
-     * @param index Multi-dimensional array of indices specifying the location
-     *             in the HDU where to write the data
-     * @param data Data to write
+     * @tparam ConstBufferSequence Type of the buffer sequence. Must meet the
+     * requirements of @c SequenceContainer
+     *
+     * @param index The initial position for writing data
+     * @param buffers Buffer sequence containing the data to write
+     *
      * @return Number of bytes written
      */
-    template <std::size_t N>
+    template <std::size_t N, class ConstBufferSequence>
     std::size_t write_data(const std::initializer_list<std::size_t> &index,
-                           const std::vector<typename std::tuple_element<N, std::tuple<Args...>>::type> &data)
+                           const ConstBufferSequence &buffers)
     {
-        boost::asio::const_buffer buffer(data.data(), data.size() * sizeof(typename std::tuple_element<N, std::tuple<Args...>>::type));
-        return std::get<N>(hdus_).write_data(index, buffer);
+        return std::get<N>(hdus_).write_data(index, buffers);
     }
 
     /**
-     * @brief Asynchronously write data to a given HDU.
+     * @brief Asynchronously write data to a given HDU
      *
-     * This function writes data to a given HDU asynchronously. The HDU is specified by
-     * its index in the tuple of HDUs. The data is written at the specified
-     * location in the HDU. The location is specified by a multi-dimensional
-     * array of indices, where each index specifies the position of the
-     * element in the respective dimension.
+     * This function writes data to a given HDU asynchronously. The HDU is
+     * identified by its index in the tuple of HDUs.
      *
      * @tparam N Index of the HDU in the tuple of HDUs
-     * @tparam WriteToken Type of the token to pass to the completion handler
-     * @param index Multi-dimensional array of indices specifying the location
-     *             in the HDU where to write the data
-     * @param data Data to write
-     * @param token Token to pass to the completion handler
-     * @return A token that is used to retrieve the result of the asynchronous operation
+     * @tparam ConstBufferSequence Type of the buffer sequence. Must meet the
+     * requirements of @c SequenceContainer
+     * @tparam WriteToken Type of the token. Must meet the requirements of
+     * @c AsyncWriteToken
+     *
+     * @param index The initial position for writing data
+     * @param buffers Buffer sequence containing the data to write
+     * @param token The token to pass to the completion handler
+     *
+     * @return A token that is used to retrieve the result of the asynchronous
+     * operation
      */
-    template <std::size_t N, class WriteToken>
+    template <std::size_t N, class ConstBufferSequence, class WriteToken>
     auto async_write_data(const std::initializer_list<std::size_t> &index,
-                          const std::vector<typename std::tuple_element<N, std::tuple<Args...>>::type> &data,
+                          const ConstBufferSequence &buffers,
                           WriteToken &&token)
     {
-        boost::asio::const_buffer buffer(data.data(), data.size() * sizeof(typename std::tuple_element<N, std::tuple<Args...>>::type));
-        return std::get<N>(hdus_).async_write_data(index, buffer, std::forward<WriteToken>(token));
+        return std::get<N>(hdus_).async_write_data(index, buffers, std::forward<WriteToken>(token));
     }
 
     /**

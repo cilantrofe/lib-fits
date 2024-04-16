@@ -239,9 +239,9 @@ public:
                 offset += 80; // Increment the offset to the next 80-byte block
             }
 
-            offset_ = offset; // Set the current HDU's offset
+            offset_ = round_offset(offset); // Set the current HDU's offset
 
-            return std::make_pair(hdu(*this), round_offset(offset));
+            return std::make_pair(hdu(*this), round_offset(offset_));
         }
 
         /**
@@ -256,7 +256,7 @@ public:
          */
         std::size_t calculate_data_block_size() const noexcept
         {
-            const std::size_t data_block_size = (((get_NAXIS_product() * std::abs(get_BITPIX()) / 8) + kSizeHeaderBlock - 1) / kSizeHeaderBlock) * kSizeHeaderBlock;
+            const std::size_t data_block_size = round_offset((get_NAXIS_product() * std::abs(get_BITPIX()) / 8));
 
             return data_block_size;
         }
@@ -480,27 +480,26 @@ public:
              *
              * @param parent_hdu The parent HDU
              */
-            image_hdu(ifits &parent_hdu)
+            image_hdu(hdu &parent_hdu)
                 : parent_hdu_(parent_hdu)
             {
             }
 
             /**
-             * @brief Asynchronously read image data from the file
+             * @brief Asynchronously read image data at a specific index
              *
-             * This function reads image data from the file at the specified indices and stores it in the buffer.
-             * The function is asynchronous and returns immediately.
+             * This function asynchronously reads image data from a specific index.
+             * The function returns a `boost::asio::async_result<ReadToken, std::size_t>`
+             * object representing the result of the asynchronous operation.
              *
-             * @tparam N The number of buffers in the MutableBufferSequence
-             * @tparam MutableBufferSequence The type of the buffer sequence
-             * @tparam ReadToken The type of the token
-             * @param index The indices at which to read
-             * @param buffers The buffer sequence to read data into
-             * @param token The token to pass to the completion handler
-             * @return A token that is used to retrieve the result of the asynchronous operation
+             * @param index The initial position for reading data
+             * @param buffers A sequence of buffers into which the data will be read
+             * @param token A token for the asynchronous operation
+             * @return A `boost::asio::async_result<ReadToken, std::size_t>` object representing the result of the asynchronous operation
              */
-            template <std::size_t N, class MutableBufferSequence, class ReadToken>
-            auto async_read_data(const std::initializer_list<std::size_t> &index, const MutableBufferSequence &buffers, ReadToken &&token)
+            template <class MutableBufferSequence, class ReadToken>
+            auto async_read_data(const std::initializer_list<std::size_t> &index,
+                                 const MutableBufferSequence &buffers, ReadToken &&token)
             {
                 std::size_t offset = sizeof(T) * parent_hdu_.calculate_offset(index);
 
@@ -509,22 +508,25 @@ public:
                     throw std::runtime_error("Index is out of bounds");
                 }
 
-                return boost::asio::async_read_at(parent_hdu_.parent_ifits_.file_, parent_hdu_.offset_ + offset, buffers, std::forward<ReadToken>(token));
+                return boost::asio::async_read_at(parent_hdu_.parent_ifits_.file_, // Read from the file
+                                                  parent_hdu_.offset_ + offset,    // Starting from the offset
+                                                  buffers,                         // Into these buffers
+                                                  std::forward<ReadToken>(token)); // With this token
             }
 
             /**
-             * @brief Synchronously read image data from the file
+             * @brief Synchronously read image data at a specific index
              *
-             * This function reads image data from the file at the specified indices and stores it in the buffer.
-             * The function is synchronous and blocks until the data is read.
+             * This function synchronously reads image data from a specific index.
+             * The function returns the number of bytes read.
              *
-             * @tparam MutableBufferSequence The type of the buffer sequence
-             * @param index The indices at which to read
-             * @param buffers The buffer sequence to read data into
+             * @param index The initial position for reading data
+             * @param buffers A sequence of buffers into which the data will be read
              * @return The number of bytes read
              */
             template <class MutableBufferSequence>
-            std::size_t read_data(std::initializer_list<std::size_t> index, const MutableBufferSequence &buffers)
+            std::size_t read_data(std::initializer_list<std::size_t> index,
+                                  const MutableBufferSequence &buffers)
             {
                 std::size_t offset = sizeof(T) * parent_hdu_.calculate_offset(index);
 
@@ -533,7 +535,9 @@ public:
                     throw std::runtime_error("Index is out of bounds");
                 }
 
-                return boost::asio::read_at(parent_hdu_.parent_ifits_.file_, parent_hdu_.offset_ + offset, buffers);
+                return boost::asio::read_at(parent_hdu_.parent_ifits_.file_, // Read from the file
+                                            parent_hdu_.offset_ + offset,    // Starting from the offset
+                                            buffers);                        // Into these buffers
             }
 
         private:

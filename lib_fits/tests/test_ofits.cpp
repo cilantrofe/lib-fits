@@ -66,13 +66,13 @@ TEST(ofits_test, check_data)
     std::vector<std::uint8_t> data_uint8_t = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
 
     // Write data to the first HDU
-    double_hdu_data_file.write_data<0>({1, 2}, data_uint8_t);
+    double_hdu_data_file.write_data<0>({1, 2}, boost::asio::buffer(data_uint8_t));
 
     // Data for the second HDU
     std::vector<float> data_float = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f};
 
     // Write data to the second HDU
-    double_hdu_data_file.write_data<1>({3, 2, 1}, data_float);
+    double_hdu_data_file.write_data<1>({3, 2, 1}, boost::asio::buffer(data_float));
 }
 
 // Test reading a file with three HDU
