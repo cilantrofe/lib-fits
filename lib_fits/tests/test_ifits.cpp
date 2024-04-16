@@ -1,13 +1,19 @@
+// Unit tests for ifits class
+
 #include <gtest/gtest.h>
 #include "ifits.hpp"
 
+// Path to the data used in the unit tests
 #define DATA_ROOT PROJECT_ROOT "/tests/data"
 
+// Test printing the headers of a FITS file
 TEST(test_ifits, print_headers)
 {
-    std::filesystem::path filename = DATA_ROOT "/movie-64.fits";
+    // Movie-64 fits file
+    std::filesystem::path movie64_filename = DATA_ROOT "/movie-64.fits";
 
-    ifits movie64_fits(filename);
+    // Read FITS file
+    ifits movie64_fits(movie64_filename);
 
     std::cout << "Movie-64 fits file" << '\n';
 
@@ -21,9 +27,11 @@ TEST(test_ifits, print_headers)
         }
     }
 
-    filename = DATA_ROOT "/gradient.fits";
+    // Gradient fits file
+    std::filesystem::path gradient_filename = DATA_ROOT "/gradient.fits";
 
-    ifits gradient_fits(filename);
+    // Read FITS file
+    ifits gradient_fits(gradient_filename);
 
     std::cout << "Gradient fits file" << '\n';
 
@@ -38,12 +46,16 @@ TEST(test_ifits, print_headers)
     }
 }
 
+// Test throwing an exception when a header keyword is not found
 TEST(test_ifits, check_not_existing_header)
 {
-    std::filesystem::path filename = DATA_ROOT "/movie-64.fits";
+    // Movie-64 fits file
+    std::filesystem::path movie64_filename = DATA_ROOT "/movie-64.fits";
 
-    ifits movie64_fits(filename);
+    // Read FITS file
+    ifits movie64_fits(movie64_filename);
 
+    // Try to get a non-existing header keyword
     try
     {
         std::string value = movie64_fits.get_hdus().front().value_as<std::string>("NON_EXISTING_KEY");
@@ -53,10 +65,13 @@ TEST(test_ifits, check_not_existing_header)
         EXPECT_STREQ(e.what(), "Header keyword not found");
     }
 
-    filename = DATA_ROOT "/gradient.fits";
+    // Gradient fits file
+    std::filesystem::path gradient_filename = DATA_ROOT "/gradient.fits";
 
-    ifits gradient_fits(filename);
+    // Read FITS file
+    ifits gradient_fits(gradient_filename);
 
+    // Try to get a non-existing header keyword
     try
     {
         std::string value = gradient_fits.get_hdus().front().value_as<std::string>("NON_EXISTING_KEY");
@@ -67,12 +82,16 @@ TEST(test_ifits, check_not_existing_header)
     }
 }
 
+// Test getting values from the headers
 TEST(test_ifits, check_values)
 {
-    std::filesystem::path filename = DATA_ROOT "/movie-64.fits";
+    // Movie-64 fits file
+    std::filesystem::path movie64_filename = DATA_ROOT "/movie-64.fits";
 
-    ifits movie64_fits(filename);
+    // Read FITS file
+    ifits movie64_fits(movie64_filename);
 
+    // Iterate over the HDUs and check if the values are the same as the original ones
     for (const auto &hdu : movie64_fits.get_hdus())
     {
         for (const auto &[key, value] : hdu.get_headers())
@@ -81,10 +100,13 @@ TEST(test_ifits, check_values)
         }
     }
 
-    filename = DATA_ROOT "/gradient.fits";
+    // Gradient fits file
+    std::filesystem::path gradient_filename = DATA_ROOT "/gradient.fits";
 
-    ifits gradient_fits(filename);
+    // Read FITS file
+    ifits gradient_fits(gradient_filename);
 
+    // Iterate over the HDUs and check if the values are the same as the original ones
     for (const auto &hdu : gradient_fits.get_hdus())
     {
         for (const auto &[key, value] : hdu.get_headers())
@@ -94,12 +116,16 @@ TEST(test_ifits, check_values)
     }
 }
 
+// Test getting values from the headers using optional
 TEST(test_ifits, check_value_as_optional)
 {
-    std::filesystem::path filename = DATA_ROOT "/movie-64.fits";
+    // Movie-64 fits file
+    std::filesystem::path movie64_filename = DATA_ROOT "/movie-64.fits";
 
-    ifits movie64_fits(filename);
+    // Read FITS file
+    ifits movie64_fits(movie64_filename);
 
+    // Iterate over the HDUs and check if the values are the same as the original ones
     for (const auto &hdu : movie64_fits.get_hdus())
     {
         for (const auto &[key, value] : hdu.get_headers())
@@ -109,24 +135,31 @@ TEST(test_ifits, check_value_as_optional)
     }
 }
 
+// Test getting a non-existing header using optional
 TEST(test_ifits, check_not_existing_header_optional)
 {
-    std::filesystem::path filename = DATA_ROOT "/movie-64.fits";
+    // Movie-64 fits file
+    std::filesystem::path movie64_filename = DATA_ROOT "/movie-64.fits";
 
-    ifits movie64_fits(filename);
+    // Read FITS file
+    ifits movie64_fits(movie64_filename);
 
+    // Try to get a non-existing header using optional
     std::optional<std::string> value = movie64_fits.get_hdus().front().value_as_optional<std::string>("NON_EXISTING_KEY");
     EXPECT_EQ(value, std::nullopt);
 }
 
+// Test reading a file with double HDU
 TEST(test_ifits, check_double_hdu)
 {
-    std::filesystem::path filename = DATA_ROOT "/double_hdu.fits";
+    // Double HDU fits file
+    std::filesystem::path double_hdu_filename = DATA_ROOT "/double_hdu_read.fits";
 
-    ifits double_hdu_fits(filename);
+    // Read FITS file
+    ifits double_hdu_fits(double_hdu_filename);
 
+    // Iterate over the HDUs and check if the values are the same as the original ones
     auto &hdus = double_hdu_fits.get_hdus();
-
     for (const auto &hdu : hdus)
     {
         for (const auto &[key, value] : hdu.get_headers())

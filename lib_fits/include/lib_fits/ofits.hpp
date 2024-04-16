@@ -4,11 +4,10 @@
  * @brief Declaration of ofits class for writing FITS files.
  * @version 0.1
  * @date 2024-04-10
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
-
 
 // STL
 #include <string>
@@ -19,6 +18,9 @@
 #include <initializer_list>
 #include <stdexcept>
 #include <filesystem>
+#include <numeric>
+#include <functional>
+#include <iostream>
 
 // Boost
 #include <boost/asio.hpp>
@@ -30,10 +32,10 @@
 
 /**
  * @brief Class for writing FITS files.
- * 
+ *
  * This class allows to write FITS files with arbitrary number of HDUs and
  * their headers.
- * 
+ *
  * @tparam Args Types of HDUs
  */
 template <class... Args>
@@ -53,30 +55,31 @@ public:
     ofits(const std::filesystem::path &filename, std::array<std::initializer_list<std::size_t>, sizeof...(Args)> schema)
         : io_context_(),
           file_(io_context_, filename, boost::asio::stream_file::write_only | boost::asio::stream_file::create),
-          offset_(0),
-          hdus_{std::apply([&](auto &&...args)
-          {
-              // Make HDUs using the schema and store them in a tuple.
-              return std::make_tuple(hdu<Args>(*this, offset_, args)...);
-          }, schema)}
+          hdus_{make_hdu_tuple(*this, schema)}
     {
     }
 
-    void run() {
+    /**
+     * @brief Run the I/O context.
+     *
+     * This function runs the I/O context until it is stopped. The function is
+     * usually called after all HDUs are written to the file.
+     */
+    void run() noexcept
+    {
+        // Run the I/O context until it is stopped
         io_context_.run();
     }
 
     /**
-     * @brief Update the current offset in the file.
+     * @brief Stop the I/O context.
      *
-     * This function should be called by HDUs when they are writing data.
-     *
-     * @param offset The new offset in the file
+     * This function stops the I/O context. The function is usually called after all
+     * HDUs are written to the file and the I/O context is no longer needed.
      */
-    void update_offset(std::size_t offset)
+    void stop() noexcept
     {
-        // Update the current offset in the file. The HDUs will use this offset when writing data.
-        offset_ = offset;
+        io_context_.stop();
     }
 
     /**
@@ -92,15 +95,23 @@ public:
     template <std::size_t N, class T>
     void value_as(std::string_view key, T value) const
     {
-        /*
-         * Set value of a header in a given HDU.
-         *
-         * This function sets the value of a header key in a given HDU.
-         *
-         * @param key Key of the header to set
-         * @param value Value to set
-         */
-        std::get<N>(hdus_).template value_as<T>(key, value);
+        try
+        {
+            /*
+             * Set value of a header in a given HDU.
+             *
+             * This function sets the value of a header key in a given HDU.
+             *
+             * @param key Key of the header to set
+             * @param value Value to set
+             */
+            std::get<N>(hdus_).template value_as<T>(key, value);
+        }
+        catch (const std::exception &e)
+        {
+            throw std::runtime_error("Error setting value of header " + std::string(key) +
+                                     " in HDU " + std::to_string(N) + ": " + e.what());
+        }
     }
 
     /**
@@ -145,8 +156,8 @@ public:
      */
     template <std::size_t N, class WriteToken>
     auto async_write_data(const std::initializer_list<std::size_t> &index,
-                           const std::vector<typename std::tuple_element<N, std::tuple<Args...>>::type> &data,
-                           WriteToken &&token)
+                          const std::vector<typename std::tuple_element<N, std::tuple<Args...>>::type> &data,
+                          WriteToken &&token)
     {
         boost::asio::const_buffer buffer(data.data(), data.size() * sizeof(typename std::tuple_element<N, std::tuple<Args...>>::type));
         return std::get<N>(hdus_).async_write_data(index, buffer, std::forward<WriteToken>(token));
@@ -192,7 +203,7 @@ public:
          * @param offset Offset of the HDU in the file
          * @param hdu_schema Schema of the HDU. Contains the size of each dimension of the HDU
          */
-        hdu(ofits &parent_ofits, std::size_t offset, const std::initializer_list<std::size_t> &hdu_schema)
+        hdu(ofits &parent_ofits, std::size_t offset, const std::initializer_list<std::size_t> &hdu_schema) noexcept
             : parent_ofits_(parent_ofits), headers_written_(0), header_block_(2880, ' '), offset_(offset)
         {
             write_header("SIMPLE", "T"); // Value is "T" because the HDU is simple
@@ -220,19 +231,13 @@ public:
             write_header("EXTEND", "T"); // Value is "T" because the HDU is extended
 
             write_header("END", ""); // Value is empty
-
-            // Calculate the size of the data block of the HDU
-            data_block_size_ = (((naxis_product * std::abs(bitpix) / 8) + kSizeHeaderBlock - 1) / kSizeHeaderBlock) * kSizeHeaderBlock;
-
-            // Update the offset of the next HDU in the file
-            parent_ofits_.update_offset(round_offset(80 * headers_written_) + data_block_size_ + offset_);
         }
 
         /**
          * @brief Write a value to the HDU's header
          *
          * This function writes the value to the PDU header in the specified key instead of the END.
-         * 
+         *
          * @tparam U Type of the value
          * @param key Key of the header keyword
          * @param value Value to be written
@@ -264,7 +269,6 @@ public:
             }
         }
 
-
         /**
          * @brief Write data to the HDU
          *
@@ -284,14 +288,14 @@ public:
             std::size_t offset = calculate_offset(index);
 
             std::size_t data_size = boost::asio::buffer_size(buffers);
-            
+
             // Check if there is enough space in the HDU data block
             if (data_size + offset > data_block_size_)
             {
                 throw std::runtime_error("Not enough space in the HDU");
             }
 
-            return boost::asio::write_at(parent_ofits_.file_, offset_ + kSizeHeaderBlock + offset, buffers);
+            return boost::asio::write_at(parent_ofits_.file_, offset_ + kSizeHeaderBlock /*headers written*/ + offset, buffers);
         }
 
         /**
@@ -323,7 +327,7 @@ public:
                 throw std::runtime_error("Not enough space in the HDU");
             }
 
-            return boost::asio::async_write_at(parent_ofits_.file_, offset_ + kSizeHeaderBlock + offset, buffers, std::forward<WriteToken>(token));
+            return boost::asio::async_write_at(parent_ofits_.file_, offset_ + kSizeHeaderBlock /*headers written*/ + offset, buffers, std::forward<WriteToken>(token));
         }
 
         /**
@@ -466,34 +470,96 @@ public:
             }
         }
 
-        /**
-         * @brief Round up the offset to the nearest multiple of the size of the header block.
-         *
-         * This function rounds up the given offset to the nearest multiple of the
-         * size of the header block (2880 bytes). The result is the smallest
-         * multiple of the header block that is greater than or equal to the
-         * given offset.
-         *
-         * @param offset The offset to be rounded
-         * @return The rounded offset
-         */
-        static std::size_t round_offset(const std::size_t &offset)
-        {
-            return (offset % kSizeHeaderBlock == 0) ? offset : (offset / kSizeHeaderBlock + 1) * kSizeHeaderBlock;
-        }
-
     private:
-        ofits &parent_ofits_; // Parent OFITS object
-        std::string header_block_; // Header block of the HDU
+        ofits &parent_ofits_;                 // Parent OFITS object
+        std::string header_block_;            // Header block of the HDU
         mutable std::size_t headers_written_; // Number of headers written to the HDU
-        std::size_t offset_; // Offset of the HDU in the file
-        std::size_t data_block_size_; // Size of the data block in the HDU
-        std::vector<std::size_t> naxis_; // Number of elements in each dimension of the HDU
+        std::size_t offset_;                  // Offset of the HDU in the file
+        std::size_t data_block_size_;         // Size of the data block in the HDU
+        std::vector<std::size_t> naxis_;      // Number of elements in each dimension of the HDU
     };
 
 private:
-    boost::asio::io_context io_context_; // IO context to use for asynchronous operations
+    /**
+     * @brief Size of the header block
+     *
+     * The header block is the part of the HDU that contains the keyword=value pairs.
+     * It is 2880 bytes long.
+     */
+    static constexpr auto kSizeHeaderBlock = 2880;
+
+    /**
+     * @brief Round up the offset to the nearest multiple of the size of the header block.
+     *
+     * This function rounds up the given offset to the nearest multiple of the
+     * size of the header block (2880 bytes). The result is the smallest
+     * multiple of the header block that is greater than or equal to the
+     * given offset.
+     *
+     * @param offset The offset to be rounded
+     * @return The rounded offset
+     */
+    static std::size_t round_offset(const std::size_t &offset) noexcept
+    {
+        return (offset % kSizeHeaderBlock == 0) ? offset : (offset / kSizeHeaderBlock + 1) * kSizeHeaderBlock;
+    }
+
+    /**
+     * @brief Create a tuple of HDUs based on a schema
+     *
+     * This function creates a tuple of HDUs based on a schema that specifies the
+     * number of elements in each dimension. The schema is an array of initializer
+     * lists, where each initializer list specifies the number of elements in the
+     * corresponding dimension of the HDU. The function returns a tuple of HDU
+     * objects, where each HDU object represents one HDU in the file.
+     *
+     * @param parent_ofits Parent OFITS object
+     * @param schema Schema specifying the number of elements in each dimension
+     * @return Tuple of HDU objects
+     */
+    static std::tuple<hdu<Args>...> make_hdu_tuple(ofits &parent_ofits, std::array<std::initializer_list<std::size_t>, sizeof...(Args)> schema) noexcept
+    {
+        // Calculate the offsets of the HDUs in the file
+        std::array<size_t, sizeof...(Args)> offset;
+        size_t current_offset = 0;
+
+        std::array<std::size_t, sizeof...(Args)> sizes = {sizeof(Args)...};
+
+        for (size_t i = 0; i < sizeof...(Args); ++i)
+        {
+            offset[i] = current_offset;
+
+            current_offset += kSizeHeaderBlock + round_offset(std::accumulate(schema[i].begin(), schema[i].end(), sizes[i], std::multiplies<std::size_t>()));
+        }
+
+        return make_hdu_tuple_impl(parent_ofits, schema, offset, std::make_index_sequence<sizeof...(Args)>{});
+    }
+
+    /**
+     * @brief Create a tuple of HDUs from a schema
+     *
+     * This function creates a tuple of HDUs based on a schema that specifies the
+     * number of elements in each dimension. The schema is an array of initializer
+     * lists, where each initializer list specifies the number of elements in the
+     * corresponding dimension of the HDU. The function returns a tuple of HDU
+     * objects, where each HDU object represents one HDU in the file.
+     *
+     * @tparam Is Indices of the HDUs in the tuple
+     * @param parent_ofits Parent OFITS object
+     * @param schema Schema of the HDUs
+     * @param offset Offsets of the HDUs in the file
+     * @param is_ Indices sequence
+     * @return Tuple of HDU objects
+     */
+    template <size_t... Is>
+    static std::tuple<hdu<Args>...> make_hdu_tuple_impl(ofits &parent_ofits, std::array<std::initializer_list<std::size_t>, sizeof...(Args)> &schema, std::array<size_t, sizeof...(Args)> &offset, std::index_sequence<Is...> is_) noexcept
+    {
+        // Create tuple of HDUs from the schema
+        return std::make_tuple(hdu<Args>(parent_ofits, offset[Is], schema[Is])...);
+    }
+
+private:
+    boost::asio::io_context io_context_;   // IO context to use for asynchronous operations
     boost::asio::random_access_file file_; // File to write to
-    std::size_t offset_; // Offset of the HDU in the file
-    std::tuple<hdu<Args>...> hdus_; // HDUs of the file
+    std::tuple<hdu<Args>...> hdus_;        // HDUs of the file
 };
