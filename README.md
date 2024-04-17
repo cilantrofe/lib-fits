@@ -61,7 +61,7 @@ Here's an example of how to use the library in your code:
 int main()
 {
     //
-    / Writing
+    // Writing
     //
 
     // Creating example.fits with 2 HDU's of size 20*30 and 10*6*5 in examples/build
