@@ -1,6 +1,8 @@
 #include <lib_fits.hpp>
 #include <iostream>
 #include <boost/asio.hpp>
+#include <memory>
+
 
 int main()
 {
@@ -13,7 +15,7 @@ int main()
     std::vector<int16_t> data_1 = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
     // Write data to first HDU
-    // {1, 2} - index --> offset for data = (1 × NAXIS2 + 2) × sizeof(int16_t) = 32 × 2 = 64
+    // {1, 2} - index --> offset for data = (1 × NAXIS2 + 2) × sizeof(int16_t) = 32 × 2 = 64 relative to current HDU in data block
     example_write.async_write_data<0>({1, 2}, boost::asio::buffer(data_1), [](const boost::system::error_code &error, std::size_t bytes_transferred)
                                       {
         if (!error) {
@@ -30,6 +32,7 @@ int main()
 
 
 
+
     /*
     / Reading
     */
@@ -41,45 +44,29 @@ int main()
     auto hdu_1 = example_read.get_hdu<1>().value_as<std::string>("EXAMPLE");
 
     std::cout << hdu_1 << std::endl;
-    
-    // Read data from first HDU
+
     auto hdu_0 = example_read.get_hdu<0>();
 
-    // TODO: Fix this
-    std::vector<int16_t> buffer(10);
-    ifits::hdu::image_hdu<int16_t> image(hdu_0);
-
-    // This OK
-    image.async_read_data({1, 2}, boost::asio::buffer(buffer), [&](const boost::system::error_code &error, std::size_t bytes_transferred)
-                          {
-        if (!error) {
-            std::cout << "Data read successfully!" << std::endl;
-            std::cout << "Elements read: ";
-            for (std::size_t i = 0; i < 10; ++i) {
-                std::cout << buffer[i] << " ";
-            }
-            std::cout << std::endl;
-        } else {
-            std::cerr << "Error reading data: " << error.message() << std::endl;
-        } });
-    
-    // NOT OK
+    // Apply a function to the current HDU, based on its BITPIX value
+    // Async read data from first HDU
+    // Pattern Visitor
     hdu_0.apply([](auto x)
                 {
-        std::vector<int16_t> buffer(10);
-        x.async_read_data({1, 2}, boost::asio::buffer(buffer), [&](const boost::system::error_code &error, std::size_t bytes_transferred)
+        // Using shared_ptr to manage buffer memory
+        auto buffer = std::make_shared<std::vector<int16_t>>(10);
+        x.async_read_data({1, 2}, boost::asio::buffer(*buffer), [buffer](const boost::system::error_code &error, std::size_t bytes_transferred)
                           {
-        if (!error) {
-            std::cout << "Data read successfully!" << std::endl;
-            std::cout << "Bytes read: " << bytes_transferred << std::endl;
-            for (std::size_t i = 0; i < 10; ++i) {
-                    std::cout << buffer[i] << " ";
+            if (!error) {
+                std::cout << "Data read successfully!" << std::endl;
+                std::cout << "Bytes read: " << bytes_transferred << std::endl;
+                for (std::size_t i = 0; i < 10; ++i) {
+                    std::cout << (*buffer)[i] << " ";
+                }
+                std::cout << std::endl;
+            } else {
+                std::cerr << "Error reading data: " << error.message() << std::endl;
             }
-            std::cout << std::endl;
-        } else {
-            std::cerr << "Error reading data: " << error.message() << std::endl;
-        } }); });
-
+        }); });
 
     // Run the IO context for asynchronous operations
     example_read.run();

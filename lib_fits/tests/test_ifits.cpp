@@ -58,7 +58,7 @@ TEST(test_ifits, check_not_existing_header)
     // Try to get a non-existing header keyword
     try
     {
-        std::string value = movie64_fits.get_hdus().front().value_as<std::string>("NON_EXISTING_KEY");
+        std::string value = movie64_fits.get_hdu<0>().value_as<std::string>("NON_EXISTING_KEY");
     }
     catch (const std::out_of_range &e)
     {
@@ -74,7 +74,7 @@ TEST(test_ifits, check_not_existing_header)
     // Try to get a non-existing header keyword
     try
     {
-        std::string value = gradient_fits.get_hdus().front().value_as<std::string>("NON_EXISTING_KEY");
+        std::string value = gradient_fits.get_hdu<0>().value_as<std::string>("NON_EXISTING_KEY");
     }
     catch (const std::out_of_range &e)
     {
@@ -145,7 +145,7 @@ TEST(test_ifits, check_not_existing_header_optional)
     ifits movie64_fits(movie64_filename);
 
     // Try to get a non-existing header using optional
-    std::optional<std::string> value = movie64_fits.get_hdus().front().value_as_optional<std::string>("NON_EXISTING_KEY");
+    std::optional<std::string> value = movie64_fits.get_hdu<0>().value_as_optional<std::string>("NON_EXISTING_KEY");
     EXPECT_EQ(value, std::nullopt);
 }
 
@@ -167,4 +167,28 @@ TEST(test_ifits, check_double_hdu)
             EXPECT_EQ(value, hdu.value_as<std::string>(key));
         }
     }
+}
+
+TEST(test_ifits, check_read_data)
+{
+    ifits example_fits(DATA_ROOT "/example.fits");
+
+    auto &hdu_0 = example_fits.get_hdu<0>();
+
+    hdu_0.apply([](auto x)
+                {
+        // Using shared_ptr to manage buffer memory
+        auto buffer = std::make_shared<std::vector<int16_t>>(10);
+        x.async_read_data({1, 2}, boost::asio::buffer(*buffer), [buffer](const boost::system::error_code &error, std::size_t bytes_transferred)
+                          {
+            if (!error) {
+                std::vector<int16_t> expected = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+                EXPECT_EQ(bytes_transferred, 20);
+                for (int i = 0; i < 10; ++i) {
+                    EXPECT_EQ((*buffer)[i], expected[i]);
+                }
+            } else {
+                std::cerr << "Error reading data: " << error.message() << std::endl;
+            }
+        }); });
 }
