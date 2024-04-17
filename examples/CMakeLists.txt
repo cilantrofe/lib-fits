@@ -16,7 +16,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(Boost_USE_STATIC_LIBS ON)
 
 # Find the Boost libraries.
-find_package(Boost 1.82.0)
+find_package(Boost 1.84.0)
 
 # Include the Boost include directories.
 include_directories(${Boost_INCLUDE_DIRS})
