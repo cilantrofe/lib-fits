@@ -31,7 +31,6 @@ if (NOT WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ASIO_HAS_IO_URING)
 else()
     target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ASIO_HAS_IOCP)
-    add_compile_options(/D _WIN32_WINNT=0x0601)
 endif()
 
 # Discover and run the tests.

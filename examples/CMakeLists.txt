@@ -16,7 +16,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(Boost_USE_STATIC_LIBS ON)
 
 # Find the Boost libraries.
-find_package(Boost 1.82.0)
+find_package(Boost 1.84.0)
 
 # Include the Boost include directories.
 include_directories(${Boost_INCLUDE_DIRS})
@@ -47,7 +47,6 @@ if (NOT WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ASIO_HAS_IO_URING)
 else()
     target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ASIO_HAS_IOCP)
-    add_compile_options(/D _WIN32_WINNT=0x0601)
 endif()
 
 # Link the executable against the lib_fits library.

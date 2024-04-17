@@ -53,7 +53,7 @@ public:
      */
     ofits(const std::filesystem::path &filename, std::array<std::initializer_list<std::size_t>, sizeof...(Args)> schema)
         : io_context_(),
-          file_(io_context_, filename, boost::asio::stream_file::write_only | boost::asio::stream_file::create),
+          file_(io_context_.get_executor(), filename.string(), boost::asio::random_access_file::write_only | boost::asio::random_access_file::create),
           hdus_{make_hdu_tuple(*this, schema)}
     {
     }

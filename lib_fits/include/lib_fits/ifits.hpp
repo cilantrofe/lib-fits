@@ -56,7 +56,7 @@ public:
      */
     explicit ifits(const std::filesystem::path &filename)
         : io_context_(),
-          file_(io_context_, filename, boost::asio::random_access_file::read_only)
+          file_(io_context_.get_executor(), filename.string(), boost::asio::random_access_file::read_only)
     {
         std::uint64_t next_hdu_offset = 0; // The offset of the next HDU
 
