@@ -20,7 +20,6 @@
 #include <filesystem>
 #include <numeric>
 #include <functional>
-#include <iostream>
 
 // Boost
 #include <boost/asio.hpp>
