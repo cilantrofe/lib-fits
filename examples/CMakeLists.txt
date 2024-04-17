@@ -8,11 +8,15 @@ project(
     examples 
     LANGUAGES CXX)
 
+# Set the C++ standard and required status.
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)     
+
 # Set Boost to use static libraries.
 set(Boost_USE_STATIC_LIBS ON)
 
 # Find the Boost libraries.
-find_package(Boost 1.84.0)
+find_package(Boost 1.82.0)
 
 # Include the Boost include directories.
 include_directories(${Boost_INCLUDE_DIRS})
@@ -35,11 +39,16 @@ add_executable(${PROJECT_NAME} main.cpp)
 # Link the executable against the Boost and lib_fits libraries.
 target_link_libraries(${PROJECT_NAME}
     ${Boost_LIBRARIES}
-    uring
 )
 
-# Define a compile definition for the target.
-target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ASIO_HAS_IO_URING)
+if (NOT WIN32)
+    target_link_libraries(${PROJECT_NAME} uring)
+    # Define a compile definition for the target.
+    target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ASIO_HAS_IO_URING)
+else()
+    target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ASIO_HAS_IOCP)
+    add_compile_options(/D _WIN32_WINNT=0x0601)
+endif()
 
 # Link the executable against the lib_fits library.
 target_link_libraries(${PROJECT_NAME} lib_fits::lib_fits)

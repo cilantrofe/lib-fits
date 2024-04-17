@@ -25,11 +25,14 @@ target_include_directories(tests PRIVATE ${PARENT_DIR}/include/lib_fits)
 # Link against the lib_fits library, Google Test, and Google Mock.
 target_link_libraries(tests PUBLIC lib_fits gtest gtest_main)
 
-# Link against the uring library.
-target_link_libraries(tests PRIVATE uring)
-
-# Define a macro to enable the io_uring library.
-target_compile_definitions(tests PRIVATE BOOST_ASIO_HAS_IO_URING)
+if (NOT WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE uring)
+    # Define a compile definition for the target.
+    target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ASIO_HAS_IO_URING)
+else()
+    target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ASIO_HAS_IOCP)
+    add_compile_options(/D _WIN32_WINNT=0x0601)
+endif()
 
 # Discover and run the tests.
 gtest_discover_tests(tests)
