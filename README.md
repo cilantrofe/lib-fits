@@ -6,6 +6,10 @@ Library for fast reading/writing of FITS files using Boost Asio
 
 ## Installation
 
+### On Linux
+
+> Before installing, make sure that you have **Boost installed at least 1.84** and **liburing**.
+
 1. Clone this repository to your local machine:
 
     ```bash
@@ -18,7 +22,7 @@ Library for fast reading/writing of FITS files using Boost Asio
     cd FITS-cpp-library/lib_fits
     ```
 
-3. Run CMake to generate build files in a `build` directory (before doing this, make sure that you have Boost installed at least 1.84):
+3. Run CMake to generate build files in a `build` directory:
 
     ```bash
     cmake -Bbuild
@@ -36,13 +40,60 @@ Library for fast reading/writing of FITS files using Boost Asio
     make
     ```
 
-6. Finally, install the project:
+6. Finally, install the project in the selected configuration:
 
     ```bash
     sudo cmake --build . --config Release --target install
     ```
+After following these steps, FITS-cpp-library should be successfully installed on your system, and you can use it.
 
-After following these steps, FITS-cpp-library should be successfully installed on your system.
+### On Windows
+
+> It is better to install WSL and use the instructions above.
+> If this is not possible, make sure that you have **Boost installed at least 1.84 and Visual Studio installed at least 17**.
+> I advise to use the shell in VSCode. To use **MSBuild** in VSCode, you need to run it in a special way.
+1. Open Developer Command Prompt for VS 2022 and enter:
+    ```bash
+    code
+    ```
+VSCode should open.
+That will setup the path correctly to use VS2022 tools, including MSBuild. And VSCode will inherit that path so will have access to MSBuild.
+
+2. Clone this repository to your local machine:
+
+    ```bash
+    git clone https://github.com/cilantrofe/FITS-cpp-library.git
+    ```
+
+3. Navigate to the `lib_fits` directory:
+
+    ```bash
+    cd FITS-cpp-library/lib_fits
+    ```
+
+4. Run CMake to generate build files in a `build` directory and point the way to the Boost:
+
+    ```bash
+    cmake -Bbuild -DBOOST_ROOT=/path/to/your/boost
+    ```
+5. Navigate to the `build` directory:
+
+    ```bash
+    cd build
+    ```
+
+6. Build the project using MSBuild:
+
+    ```bash
+    msbuild lib_fits.sln /p:CL=/std:c++20 /permissive- /D_WIN32_WINNT=0x0601
+    ```
+
+7. Finally, install the project(use Administration mode) in the selected configuration:
+
+    ```bash
+    cmake --build . --config Release --target install
+    ```
+After following these steps, FITS-cpp-library should be successfully installed on your system, and you can use it.
 
 ## How to use
 
@@ -69,9 +120,9 @@ int main()
     std::vector<int16_t> data_1 = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
     // Write data to first HDU
-    // {1, 2} - index --> offset for data = (1 × NAXIS2 + 2) × sizeof(int16_t) = 32 × 2 = 64 relative to current HDU in data block
-    example_write.async_write_data<0>({1, 2}, boost::asio::buffer(data_1), [](const boost::system::error_code &error, std::size_t bytes_transferred)
-                                      {
+    // {1, 2} - index --> offset for data = (1 × NAXIS2 + 2) × sizeof(int16_t) relative to current HDU in data block
+    example_write.async_write_data<0>({1, 2}, boost::asio::buffer(data_1), [](const boost::system::error_code &error,
+        std::size_t bytes_transferred) {
         if (!error) {
             std::cout << "Data written successfully!" << std::endl;
         } else {
@@ -106,8 +157,8 @@ int main()
                 {
         // Using shared_ptr to manage buffer memory
         auto buffer = std::make_shared<std::vector<int16_t>>(10);
-        x.async_read_data({1, 2}, boost::asio::buffer(*buffer), [buffer](const boost::system::error_code &error, std::size_t bytes_transferred)
-                          {
+        x.async_read_data({1, 2}, boost::asio::buffer(*buffer), [buffer](const boost::system::error_code &error,
+            std::size_t bytes_transferred) {
             if (!error) {
                 std::cout << "Data read successfully!" << std::endl;
                 std::cout << "Bytes read: " << bytes_transferred << std::endl;
@@ -129,12 +180,19 @@ int main()
 
 ### examples/CMakeLists.txt:
 ```cmake
+# This CMake file defines the example project, which is a simple application
+# that demonstrates the use of the lib_fits library.
+
 cmake_minimum_required(VERSION 3.5.0)
 
 # The project() function defines the project name and language.
 project(
     examples 
     LANGUAGES CXX)
+
+# Set the C++ standard and required status.
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)     
 
 # Set Boost to use static libraries.
 set(Boost_USE_STATIC_LIBS ON)
@@ -163,17 +221,39 @@ add_executable(${PROJECT_NAME} main.cpp)
 # Link the executable against the Boost and lib_fits libraries.
 target_link_libraries(${PROJECT_NAME}
     ${Boost_LIBRARIES}
-    uring
 )
 
-# Define a compile definition for the target.
-target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ASIO_HAS_IO_URING)
+if (NOT WIN32)
+    target_link_libraries(${PROJECT_NAME} uring)
+    # Define a compile definition for the target.
+    target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ASIO_HAS_IO_URING)
+else()
+    target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ASIO_HAS_IOCP)
+endif()
 
 # Link the executable against the lib_fits library.
 target_link_libraries(${PROJECT_NAME} lib_fits::lib_fits)
 ```
 
-## Output
+### Build
+#### On Linux
+```bash
+cmake -Bbuild
+cd build
+make
+./examples
+```
+
+#### On Windows
+```bash
+cmake -Bbuild -DBOOST_ROOT=/path/to/your/boost
+cd build
+msbuild examples.sln /p:CL=/std:c++20 /permissive- /D_WIN32_WINNT=0x0601
+cd Debug
+./examples.exe
+```
+
+### Output
 ```bash
 Data written successfully!
 2024-04-13
