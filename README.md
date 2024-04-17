@@ -60,9 +60,9 @@ Here's an example of how to use the library in your code:
 
 int main()
 {
-    /*
+    //
     / Writing
-    */
+    //
 
     // Creating example.fits with 2 HDU's of size 20*30 and 10*6*5 in examples/build
     ofits<int16_t, float> example_write{"example.fits", {{{20, 30}, {10, 6, 5}}}};
@@ -85,11 +85,9 @@ int main()
     example_write.value_as<1>("EXAMPLE", "2024-04-13");
 
 
-
-
-    /*
-    / Reading
-    */
+    //
+    // Reading
+    //
 
     // Open example.fits
     ifits example_read("example.fits");
