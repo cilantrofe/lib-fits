@@ -144,7 +144,7 @@ public:
          *
          * @param parent_ifits Parent IFITS object
          */
-        hdu(ifits &parent_ifits) noexcept
+        hdu(ifits &parent_ifits)
             : parent_ifits_(parent_ifits)
         {
         }
