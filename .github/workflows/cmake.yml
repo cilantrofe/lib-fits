@@ -25,10 +25,13 @@ jobs:
       run: |
         cd lib_fits
         cmake -Bbuild
+        make
+        sudo cmake --build . --config Release --target install
         
     - name: Run tests
       run: |
+        cd tests
+        cmake -Bbuild
         cd build
         make
-        cd tests
         ./tests
