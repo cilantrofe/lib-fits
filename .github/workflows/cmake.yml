@@ -23,10 +23,12 @@ jobs:
 
     - name: Build project
       run: |
+        cd lib_fits
         cmake -Bbuild
-        cmake --build build
         
     - name: Run tests
       run: |
         cd build
-        ctest --output-on-failure
+        make
+        cd tests
+        ./tests
