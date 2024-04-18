@@ -43,7 +43,7 @@ jobs:
         
     - name: Run tests
       run: |
-        cd ../tests
+        cd lib_fits/tests
         cmake -Bbuild -D "BOOST_ROOT=${{ steps.boost.outputs.root }}" \
                       -D "BOOST_LIBRARYDIR=${{ steps.boost.outputs.librarydir }}"
         cd build
