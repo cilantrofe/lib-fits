@@ -37,6 +37,7 @@ jobs:
         cd lib_fits
         cmake -Bbuild -D "BOOST_ROOT=${{ steps.boost.outputs.root }}" \
                       -D "BOOST_LIBRARYDIR=${{ steps.boost.outputs.librarydir }}"
+        cd build
         make
         sudo cmake --build . --config Release --target install
         
