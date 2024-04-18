@@ -23,14 +23,14 @@ jobs:
         sudo apt-get install make
         sudo apt install wget
         sudo apt-get install liburing-dev
-    - name: Install Boost
-      run: |    
-        wget https://boostorg.jfrog.io/artifactory/main/release/1.84.0/source/boost_1_84_0.tar.gz
-        tar xvf boost*.tar.gz
-        sudo apt install build-essential g++ python3-dev autotools-dev libicu-dev libbz2-dev 
-        cd boost_1_84_0/
-        sudo ./bootstrap.sh --prefix=/usr/
-        ./b2
+    - name: Build Boost
+      id: boost
+      uses: egor-tensin/build-boost@v1
+      with:
+        version: 1.84.0
+        libraries: filesystem program_options system
+        platform: x64
+        configuration: Release
 
     - name: Build project
       run: |
