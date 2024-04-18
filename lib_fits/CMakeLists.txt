@@ -54,8 +54,8 @@ include_directories(${Boost_INCLUDE_DIRS})
 target_link_libraries(lib_fits ${Boost_LIBRARIES})
 
 # Add the testing and gtest subdirectories.
-# add_subdirectory(tests)
-# add_subdirectory(googletest)
+add_subdirectory(tests)
+add_subdirectory(googletest)
 
 # Install the library, target exports, and config files.
 install(TARGETS ${PROJECT_NAME}
