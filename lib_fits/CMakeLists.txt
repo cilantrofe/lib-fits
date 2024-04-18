@@ -30,9 +30,6 @@ include_directories(${LIB_FITS_DIR}/lib_fits)
 # Create an interface library from the include directory.
 add_library(lib_fits INTERFACE ${LIB_FITS_DIR})
 
-# Add a compile definition for the project root directory.
-target_compile_definitions(lib_fits INTERFACE PROJECT_ROOT="${PROJECT_SOURCE_DIR}")
-
 # Add the include directory to the interface include directories.
 target_include_directories(
     ${PROJECT_NAME}
@@ -52,10 +49,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 # Link the Boost libraries to the interface library.
 target_link_libraries(lib_fits ${Boost_LIBRARIES})
-
-# Add the testing and gtest subdirectories.
-add_subdirectory(tests)
-add_subdirectory(googletest)
 
 # Install the library, target exports, and config files.
 install(TARGETS ${PROJECT_NAME}

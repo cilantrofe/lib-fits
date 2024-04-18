@@ -1,10 +1,12 @@
 // Unit tests for ofits class
 
 #include <gtest/gtest.h>
-#include "ofits.hpp"
+#include <lib_fits.hpp>
+#include <iostream>
+#include <boost/asio.hpp>
 
 // Path to the data used in the unit tests
-#define DATA_ROOT PROJECT_ROOT "/tests/data"
+#define DATA_ROOT "../data"
 
 // Test reading a file with a single HDU
 TEST(ofits_test, check_single_hdu)

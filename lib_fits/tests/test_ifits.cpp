@@ -1,10 +1,12 @@
 // Unit tests for ifits class
 
 #include <gtest/gtest.h>
-#include "ifits.hpp"
+#include <lib_fits.hpp>
+#include <iostream>
+#include <boost/asio.hpp>
 
 // Path to the data used in the unit tests
-#define DATA_ROOT PROJECT_ROOT "/tests/data"
+#define DATA_ROOT "../data"
 
 // Test printing the headers of a FITS file
 TEST(test_ifits, print_headers)
