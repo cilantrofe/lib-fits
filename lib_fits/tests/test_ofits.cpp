@@ -13,7 +13,7 @@ TEST(ofits_test, check_single_hdu)
     ofits<std::uint8_t> single_hdu_file{DATA_ROOT "/single_hdu.fits", {{{200, 300}}}};
 
     // Get the first HDU
-    auto& hdu_0 = single_hdu_file.get_hdu<0>();
+    auto &hdu_0 = single_hdu_file.get_hdu<0>();
 
     // Check the number of headers written is correct
     EXPECT_EQ(hdu_0.get_headers_written(), 6) << "The number of headers written to the first HDU should be 6";
@@ -32,10 +32,10 @@ TEST(ofits_test, check_double_hdu)
     ofits<std::uint8_t, float> double_hdu_file{DATA_ROOT "/double_hdu.fits", {{{200, 300}, {100, 50, 50}}}};
 
     // Get the first HDU
-    auto& hdu_0 = double_hdu_file.get_hdu<0>();
+    auto &hdu_0 = double_hdu_file.get_hdu<0>();
 
     // Get the second HDU
-    auto& hdu_1 = double_hdu_file.get_hdu<1>();
+    auto &hdu_1 = double_hdu_file.get_hdu<1>();
 
     // Check the number of headers written is correct
     EXPECT_EQ(hdu_0.get_headers_written(), 6) << "The number of headers written to the first HDU should be 6";
@@ -81,5 +81,3 @@ TEST(ofits_test, check_three_hdu)
     // Three HDU fits file
     ofits<std::uint8_t, float, double> three_hdu_file{DATA_ROOT "/three_hdu_data.fits", {{{20, 30}, {10, 5}, {25, 4}}}};
 }
-
-

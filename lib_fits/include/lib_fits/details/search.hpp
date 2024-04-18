@@ -4,11 +4,10 @@
  * @brief Structs and functions for case-insensitive search
  * @version 0.1
  * @date 2024-04-10
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
-
 
 // STL
 #include <string>
@@ -32,7 +31,7 @@ struct CaseInsensitiveHash
      * @param key The string whose hash value is to be computed.
      * @return The hash value of @p key.
      */
-    std::size_t operator()(const std::string_view& key) const
+    std::size_t operator()(const std::string_view &key) const
     {
         // Similar to std::hash<std::string>, but case-insensitive
         std::size_t hash = 0;
@@ -44,7 +43,6 @@ struct CaseInsensitiveHash
         return hash;
     }
 };
-
 
 /**
  * @brief Compares two strings case-insensitively.
@@ -69,13 +67,13 @@ struct CaseInsensitiveEqual
      * @return `true` if @p lhs is equal to @p rhs case-insensitively, and
      *         `false` otherwise.
      */
-    bool operator()(const std::string_view& lhs, const std::string_view& rhs) const
+    bool operator()(const std::string_view &lhs, const std::string_view &rhs) const
     {
         return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
-                          [](char a, char b) {
+                          [](char a, char b)
+                          {
                               // Convert both characters to lowercase and compare
                               return std::tolower(a) == std::tolower(b);
                           });
     }
-
 };

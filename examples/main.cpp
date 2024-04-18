@@ -3,7 +3,6 @@
 #include <boost/asio.hpp>
 #include <memory>
 
-
 int main()
 {
     /*
@@ -29,9 +28,6 @@ int main()
 
     // Add header to second HDU
     example_write.value_as<1>("EXAMPLE", "2024-04-13");
-
-
-
 
     /*
     / Reading
