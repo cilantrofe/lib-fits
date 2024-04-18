@@ -177,6 +177,11 @@ public:
         return std::get<N>(hdus_);
     }
 
+    /**
+     * @brief Class of HDU object
+     * 
+     * @tparam T 
+     */
     template <typename T>
     class hdu
     {
@@ -380,6 +385,11 @@ public:
             return offset * sizeof(T);
         }
 
+        /**
+         * @brief Get the headers written object
+         * 
+         * @return std::size_t 
+         */
         std::size_t get_headers_written() const
         {
             return headers_written_;

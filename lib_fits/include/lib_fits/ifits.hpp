@@ -16,7 +16,6 @@
 #include <optional>
 #include <sstream>
 #include <string_view>
-#include <map>
 #include <list>
 #include <filesystem>
 
@@ -344,27 +343,52 @@ public:
             return std::stoi(it->second); // Convert the string to int
         }
 
+        /**
+         * @brief 
+         * 
+         * @return header_container_t::const_iterator 
+         */
         header_container_t::const_iterator cbegin() const
         {
             return headers_.cbegin();
         }
 
+        /**
+         * @brief 
+         * 
+         * @return header_container_t::const_iterator 
+         */
         header_container_t::const_iterator begin() const
         {
             return headers_.begin();
         }
 
+        /**
+         * @brief 
+         * 
+         * @return header_container_t::const_iterator 
+         */
         header_container_t::const_iterator cend() const
         {
             return headers_.cend();
         }
 
+        /**
+         * @brief 
+         * 
+         * @return header_container_t::const_iterator 
+         */
         header_container_t::const_iterator end() const
         {
             return headers_.end();
         }
 
     public:
+        /**
+         * @brief Get the headers object
+         * 
+         * @return const header_container_t& 
+         */
         const header_container_t &get_headers() const noexcept
         {
             return headers_;
@@ -569,26 +593,51 @@ public:
         return *it;
     }
 
+    /**
+     * @brief 
+     * 
+     * @return std::list<hdu>::const_iterator 
+     */
     std::list<hdu>::const_iterator cbegin() const
     {
         return hdus_.cbegin();
     }
-
+    
+    /**
+     * @brief 
+     * 
+     * @return std::list<hdu>::const_iterator 
+     */
     std::list<hdu>::const_iterator begin() const
     {
         return hdus_.begin();
     }
 
+    /**
+     * @brief 
+     * 
+     * @return std::list<hdu>::const_iterator 
+     */
     std::list<hdu>::const_iterator cend() const
     {
         return hdus_.cend();
     }
 
+    /**
+     * @brief 
+     * 
+     * @return std::list<hdu>::const_iterator 
+     */
     std::list<hdu>::const_iterator end() const
     {
         return hdus_.end();
     }
 
+    /**
+     * @brief Get the hdus object
+     * 
+     * @return const std::list<hdu>& 
+     */
     const std::list<hdu> &get_hdus() const noexcept
     {
         return hdus_;
