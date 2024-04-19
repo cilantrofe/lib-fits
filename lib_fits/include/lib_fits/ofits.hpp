@@ -233,7 +233,7 @@ public:
             }
 
             // Calculate the size of the data block of the HDU
-            data_block_size_ = round_offset(naxis_product * std::abs(bitpix) / 8);
+            data_block_size_ = naxis_product * std::abs(bitpix) / 8;
 
             write_header("EXTEND", "T"); // Value is "T" because the HDU is extended
 
