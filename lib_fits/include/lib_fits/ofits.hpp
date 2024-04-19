@@ -232,6 +232,9 @@ public:
                 write_header("NAXIS" + std::to_string(++i), std::to_string(size));
             }
 
+            // Calculate the size of the data block of the HDU
+            data_block_size_ = round_offset(naxis_product * std::abs(bitpix) / 8);
+
             write_header("EXTEND", "T"); // Value is "T" because the HDU is extended
 
             write_header("END", ""); // Value is empty
