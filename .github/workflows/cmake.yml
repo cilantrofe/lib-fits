@@ -22,6 +22,12 @@ jobs:
         sudo apt-get install -y build-essential cmake
         sudo apt-get install make
         sudo apt-get install liburing-dev
+        wget https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-4.4.0.tar.gz
+        tar zxvf cfitsio-4.4.0.tar.gz
+        ./configure
+        make
+        make install
+        make clean
     
     - name: Update submodules
       run: git submodule update --init --recursive  
