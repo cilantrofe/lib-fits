@@ -53,3 +53,12 @@ jobs:
         cd build
         make
         ./tests 
+
+    - name: Run experiment
+      run: |
+        cd experiment
+        cmake -Bbuild -D "BOOST_ROOT=${{ steps.boost.outputs.root }}" \
+                      -D "BOOST_LIBRARYDIR=${{ steps.boost.outputs.librarydir }}"
+        cd build
+        make
+        ./experiment
