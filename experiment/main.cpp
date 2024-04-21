@@ -9,6 +9,7 @@
  *
  */
 
+
 #include <lib_fits.hpp>
 #include <iostream>
 #include <vector>
@@ -20,14 +21,22 @@ int main()
 {
     std::vector<float> data(492 * 658, 1676.0f);
 
-    ofits<float> fits{"my.fits", {{{6000, 492, 658}}}};
+    double fits_total_time = 0.0;
+    double cfitsio_total_time = 0.0;
+    int num_iterations = 10; // Количество итераций
 
-    auto start = std::chrono::steady_clock::now();
-
-    for (size_t i = 0; i < 6000; ++i)
+    for (int iteration = 0; iteration < num_iterations; ++iteration)
     {
-        fits.async_write_data<0>({i}, boost::asio::buffer(data), [&](const boost::system::error_code &error, std::size_t bytes_transferred)
-                                                  {
+        // FITS-cpp-library
+        {
+            ofits<float> fits{"my.fits", {{{6000, 492, 658}}}};
+
+            auto start = std::chrono::steady_clock::now();
+
+            for (size_t i = 0; i < 6000; ++i)
+            {
+                fits.async_write_data<0>({i}, boost::asio::buffer(data), [&](const boost::system::error_code &error, std::size_t bytes_transferred)
+                                         {
                                     if (!error)
                                     {
                                         std::cout << "Data written successfully!" << std::endl;
@@ -38,76 +47,44 @@ int main()
                                     {
                                         std::cerr << "Error writing data: " << error.message() << std::endl;
                                     } });
+            }
+
+            fits.run();
+
+            auto end = std::chrono::steady_clock::now();
+            fits_total_time += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        }
+
+        // CFITSIO
+        {
+            int status = 0;
+            fitsfile *fptr;
+            long naxes[3] = {6000, 492, 658};
+
+            fits_create_file(&fptr, "cfitsio.fits", &status);
+            auto start = std::chrono::steady_clock::now();
+
+            fits_create_img(fptr, FLOAT_IMG, 3, naxes, &status);
+
+            for (size_t i = 0; i < 6000; ++i)
+            {
+                fits_write_img(fptr, TFLOAT, 1 + i * 492 * 658, 492 * 658, data.data(), &status);
+            }
+
+            fits_close_file(fptr, &status);
+
+            auto end = std::chrono::steady_clock::now();
+            cfitsio_total_time += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        }
     }
 
-    fits.run();
+    // Вычисление среднего времени выполнения
+    double fits_average_time = fits_total_time / num_iterations;
+    double cfitsio_average_time = cfitsio_total_time / num_iterations;
 
-    auto end = std::chrono::steady_clock::now();
-
-    std::cout << "FITS-cpp-library: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
-
-    int status = 0;
-    fitsfile *fptr;
-    long naxes[3] = {6000, 492, 658};
-
-    fits_create_file(&fptr, "cfitsio.fits", &status);
-    if (status != 0)
-    {
-        fits_report_error(stderr, status);
-        return 1;
-    }
-
-    auto start1 = std::chrono::steady_clock::now();
-
-    fits_create_img(fptr, FLOAT_IMG, 3, naxes, &status);
-    if (status != 0)
-    {
-        fits_report_error(stderr, status);
-        fits_close_file(fptr, &status);
-        return 1;
-    }
-
-    for (size_t i = 0; i < 6000; ++i) {
-        fits_write_img(fptr, TFLOAT, 1 + i * 492 * 658, 492 * 658, data.data(), &status);
-    }
-
-    auto end1 = std::chrono::steady_clock::now();
-
-    fits_close_file(fptr, &status);
-    if (status != 0)
-    {
-        fits_report_error(stderr, status);
-        return 1;
-    }
-
-    std::cout << "CFITSIO: " << std::chrono::duration_cast<std::chrono::milliseconds>(end1 - start1).count() << " ms" << std::endl;
+    // Вывод результатов
+    std::cout << "Average time for FITS-cpp-library: " << fits_average_time << " ms" << std::endl;
+    std::cout << "Average time for CFITSIO: " << cfitsio_average_time << " ms" << std::endl;
 
     return 0;
 }
-
-/**
- * For 7.24 GB data
- * 
- *
- * 1) Output: 
- * FITS-cpp-library: 85537 ms
- * CFITSIO: 133741 ms
- * 
- * 2) Output: 
- * FITS-cpp-library: 73586 ms
- * CFITSIO: 136252 ms
- * 
- * 3) Output:
- * FITS-cpp-library:  84256 ms
- * CFITSIO: 138383 ms
- * 
- * 4) Output:
- * FITS-cpp-library: 85573 ms
- * CFITSIO: 141459 ms
- * 
- * Average:
- * FITS-cpp-library:  82238 ms
- * СFITSIO: 137459 ms
- * 
- * Conclusion: FITS-cpp-library is 1,7 times faster
- */
