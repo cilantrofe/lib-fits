@@ -22,14 +22,6 @@ jobs:
         sudo apt-get install -y build-essential cmake
         sudo apt-get install make
         sudo apt-get install liburing-dev
-        cd /usr/local/src
-        wget https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-4.4.0.tar.gz
-        tar zxvf cfitsio-4.4.0.tar.gz
-        cd cfitsio-4.4.0
-        ./configure
-        make
-        make install
-        make clean
     
     - name: Update submodules
       run: git submodule update --init --recursive  
@@ -59,13 +51,4 @@ jobs:
                       -D "BOOST_LIBRARYDIR=${{ steps.boost.outputs.librarydir }}"
         cd build
         make
-        ./tests
-
-    - name: Run Experiment
-      run: |
-        cd experiment
-        cmake -Bbuild -D "BOOST_ROOT=${{ steps.boost.outputs.root }}" \
-                      -D "BOOST_LIBRARYDIR=${{ steps.boost.outputs.librarydir }}"
-        cd build
-        make
-        ./experiment      
+        ./tests 
