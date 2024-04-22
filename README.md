@@ -85,7 +85,7 @@ That will setup the path correctly to use VS2022 tools, including MSBuild. And V
 6. Build the project using MSBuild:
 
     ```bash
-    msbuild lib_fits.sln /p:CL=/std:c++20 /permissive- /D_WIN32_WINNT=0x0601
+    msbuild lib_fits.sln /p:CL=/std:c++20 /p:CL=permissive- /p:CL=D_WIN32_WINNT=0x0601
     ```
 
 7. Finally, install the project(use Administration mode) in the selected configuration:
