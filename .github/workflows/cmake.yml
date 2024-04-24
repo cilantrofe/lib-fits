@@ -72,7 +72,7 @@ jobs:
         make
         ./experiment
       
-        cd experiment/cfitsio
+        cd ../../cfitsio
         cmake -Bbuild
         cd build
         make
