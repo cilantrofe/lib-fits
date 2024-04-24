@@ -22,7 +22,6 @@ jobs:
         sudo apt-get install -y build-essential cmake
         sudo apt-get install make
         sudo apt-get install liburing-dev
-        sudo apt-get install -y libcfitsio-dev
     
     - name: Update submodules
       run: git submodule update --init --recursive  
@@ -62,19 +61,4 @@ jobs:
         cd build
         make
         ./examples
-
-    - name: Run experiment
-      run: |
-        cd experiment/lib_fits
-        cmake -Bbuild -D "BOOST_ROOT=${{ steps.boost.outputs.root }}" \
-                      -D "BOOST_LIBRARYDIR=${{ steps.boost.outputs.librarydir }}"
-        cd build
-        make
-        ./experiment
-      
-        cd ../../cfitsio
-        cmake -Bbuild
-        cd build
-        make
-        ./experiment
         
