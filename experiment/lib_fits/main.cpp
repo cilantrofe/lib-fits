@@ -22,7 +22,7 @@ int main()
 
     auto end = std::chrono::steady_clock::now();
 
-    std::cout << "FITS-cpp-library (write): " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
+    std::cout << "LIB_FITS (write): " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
 
     return 0;
 }
