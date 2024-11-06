@@ -1,4 +1,4 @@
-# LIB_FITS
+# lib-fits
 
 ## Description
 
@@ -13,13 +13,13 @@ Library for fast reading/writing of FITS files using Boost Asio
 1. Clone this repository to your local machine:
 
     ```bash
-    git clone https://github.com/cilantrofe/LIB_FITS.git
+    git clone https://github.com/cilantrofe/lib-fits.git
     ```
 
 2. Navigate to the `lib_fits` directory:
 
     ```bash
-    cd LIB_FITS/lib_fits
+    cd lib-fits/lib_fits
     ```
 
 3. Run CMake to generate build files in a `build` directory:
@@ -45,7 +45,7 @@ Library for fast reading/writing of FITS files using Boost Asio
     ```bash
     sudo cmake --build . --config Release --target install
     ```
-After following these steps, LIB_FITS should be successfully installed on your system, and you can use it.
+After following these steps, lib-fits should be successfully installed on your system, and you can use it.
 
 ### On Windows
 
@@ -62,13 +62,13 @@ That will setup the path correctly to use VS2022 tools, including MSBuild. And V
 2. Clone this repository to your local machine:
 
     ```bash
-    git clone https://github.com/cilantrofe/LIB_FITS.git
+    git clone https://github.com/cilantrofe/lib-fits.git
     ```
 
 3. Navigate to the `lib_fits` directory:
 
     ```bash
-    cd LIB_FITS/lib_fits
+    cd lib-fits/lib_fits
     ```
 
 4. Run CMake to generate build files in a `build` directory and point the way to the Boost:
@@ -93,11 +93,11 @@ That will setup the path correctly to use VS2022 tools, including MSBuild. And V
     ```bash
     cmake --build . --config Release --target install
     ```
-After following these steps, LIB_FITS should be successfully installed on your system, and you can use it.
+After following these steps, lib-fits should be successfully installed on your system, and you can use it.
 
 ## How to use
 
-To use the LIB_FITS, include it in your C++ project and utilize its functionality for reading and writing FITS files using Boost Asio.
+To use the lib-fits, include it in your C++ project and utilize its functionality for reading and writing FITS files using Boost Asio.
 
 Here's an example of how to use the library in your code:
 
